@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 
 from nltk import RegexpTokenizer
@@ -34,14 +35,23 @@ if __name__ == '__main__':
                             if mode == '-s':
                                 evaluation_list = list(range(0,len(hypothesis_sentences)))
                                 count = 0
+                                evaluation_output = subprocess.run(
+                                    "./mteval/build/bin/mteval-sentence -e BLEU RIBES NIST WER -r " +
+                                    reference_file_path + " -h " + hypothesis_file_path, stdout=subprocess.PIPE,
+                                    shell=True)
+                                evaluation_output = evaluation_output.stdout.decode("UTF-8")
+                                # print(evaluation_output)
+                                evaluation_sentence_wise = evaluation_output.split("\n")
                                 for i, hypothesis_sentence in enumerate(hypothesis_sentences):
                                     evaluation_list[i] = {}
                                     reference_sentence = reference_sentences[i]
-                                    evaluation_list[i]['bleuscore'] = \
-                                        bleu_score.sentence_bleu([tokenizer.tokenize(reference_sentence)],
-                                                                 tokenizer.tokenize(hypothesis_sentence))
-                                    evaluation_list[i]['lbleuscore'] = leblue_scorer.eval_single(hypothesis_sentence,
+                                    evaluation_list[i]['lbleu'] = leblue_scorer.eval_single(hypothesis_sentence,
                                                                                                  reference_sentence)
+                                    results = evaluation_sentence_wise[i].split("\t")
+                                    evaluation_list[i]['bleu'] = float(results[0].split("=")[1])
+                                    evaluation_list[i]['ribes'] = float(results[1].split("=")[1])
+                                    evaluation_list[i]['nist'] = float(results[2].split("=")[1])
+                                    evaluation_list[i]['wer'] = float(results[3].split("=")[1])
                                 print(evaluation_list)
                         else:
                             print("""Number of sentences in hypothesis file and reference file is not equal""")
