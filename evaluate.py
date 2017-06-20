@@ -8,11 +8,10 @@ import lebleu.lebleu.lebleu as lb
 
 def errmsg():
     print("""Invalid command.
-        Usage: 
-        python3 evaluate.py hypothesis_file_name refernce_file _name [-c|-s]
-            -c: calculate score whole corpus wise
-            -s: calculate score sentence by sentence 
-        """)
+Usage: 
+    python3 evaluate.py hypothesis_file_name reference_file _name [-c|-s]
+        -c: calculate score whole corpus wise
+        -s: calculate score sentence by sentence""")
     sys.exit(1)
 
 
@@ -31,18 +30,19 @@ if __name__ == '__main__':
                                                 for hypothesis_sentence in hypothesis_file.readlines()]
                         reference_sentences = [reference_sentence.rstrip()
                                                for reference_sentence in reference_file.readlines()]
-                        if mode == '-s':
-                            evaluation_list = []
-                            count = 0
-
-                            for i, hypothesis_sentence in enumerate(hypothesis_sentences):
-                                evaluation_list[i] = {}
-                                reference_sentence = reference_sentences[i]
-                                evaluation_list[i]['bleuscore'] = bleu_score.sentence_bleu(
-                                    [tokenizer.tokenize(reference_sentence)], tokenizer.tokenize(hypothesis_sentences))
-                                evaluation_list[i]['lbleuscore'] = leblue_scorer.eval_single(hypothesis_sentence,
-                                                                                             reference_sentence)
-
+                        if len(reference_sentences) == len(hypothesis_sentences):
+                            if mode == '-s':
+                                evaluation_list = list(range(0,len(hypothesis_sentences)))
+                                count = 0
+                                for i, hypothesis_sentence in enumerate(hypothesis_sentences):
+                                    evaluation_list[i] = {}
+                                    reference_sentence = reference_sentences[i]
+                                    evaluation_list[i]['bleuscore'] = \
+                                        bleu_score.sentence_bleu([tokenizer.tokenize(reference_sentence)],
+                                                                 tokenizer.tokenize(hypothesis_sentence))
+                                    evaluation_list[i]['lbleuscore'] = leblue_scorer.eval_single(hypothesis_sentence,
+                                                                                                 reference_sentence)
+                                print(evaluation_list)
                         else:
                             print("""Number of sentences in hypothesis file and reference file is not equal""")
                             sys.exit(1)
