@@ -100,6 +100,8 @@ if __name__ == '__main__':
                                 corpus_scores['nist'] = float(results[2].split("=")[1])
                                 corpus_scores['wer'] = float(results[3].split("=")[1])
                                 corpus_scores['ter'] = float(out_sum_lines[-1].split("|")[8].lstrip().rstrip()) / 100
+                                corpus_scores['meteor'] = float(
+                                        meteor_evaluation_output.split("\n")[-2].split(":")[1].rstrip().lstrip())
                                 print(corpus_scores)
 
                         else:
