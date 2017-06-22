@@ -1,7 +1,8 @@
 import os
 import subprocess
 import sys
-from pythonrouge.pythonrouge import Pythonrouge
+from pyrouge.pyrouge.rouge import Rouge155
+from pprint import pprint
 from nltk import RegexpTokenizer
 import lebleu.lebleu.lebleu as lb
 
@@ -21,9 +22,10 @@ if __name__ == '__main__':
         reference_file_path = sys.argv[2]
         mode = sys.argv[3]
         tokenizer = RegexpTokenizer(r'\w+')
-        ROUGE_path = "/home/navneet/pythonrouge/pythonrouge/RELEASE-1.5.5/ROUGE-1.5.5.pl" # ROUGE-1.5.5.pl
-        data_path = "/home/navneet/pythonrouge/pythonrouge/RELEASE-1.5.5/data"  # data folder in RELEASE-1.5.5
+        ROUGE_path = "pythonrouge/pythonrouge/RELEASE-1.5.5/ROUGE-1.5.5.pl" # ROUGE-1.5.5.pl
+        data_path = "pythonrouge/pythonrouge/ROUGE-1.5.5/data/WordNet-2.0.exc.db"  # data folder in RELEASE-1.5.5
         leblue_scorer = lb.LeBLEU()
+        rouge = Rouge155(n_words=100)
         if os.path.exists(hypothesis_file_path) and os.path.exists(reference_file_path):
             if mode in ["-c", "-s"]:
                 with open(hypothesis_file_path, "r") as hypothesis_file:
@@ -52,10 +54,6 @@ if __name__ == '__main__':
                             meteor_evaluation_sentence_wise = meteor_evaluation_output.split('\n')[
                                                               11:11 + len(reference_sentences)]
 
-                            # rouge = Pythonrouge(n_gram=2, ROUGE_SU4=True, ROUGE_L=True, stemming=True, stopwords=True,
-                            #                     word_level=True, length_limit=True, length=50, use_cf=False, cf=95,
-                            #                     scoring_formula="average", resampling=True, samples=1000, favor=True,
-                            #                     p=0.5)
                             if mode == '-s':
                                 evaluation_list = list(range(0, len(hypothesis_sentences)))
                                 count = 0
@@ -80,12 +78,12 @@ if __name__ == '__main__':
                                                                 / 100
                                     evaluation_list[i]['meteor'] = float(
                                         meteor_evaluation_sentence_wise[i].split(":")[1].rstrip().lstrip())
-                                    # setting_file = rouge.setting(files=False, summary=hypothesis_sentence,
-                                    #                              reference=reference_sentence)
-                                    # result = rouge.eval_rouge(setting_file, recall_only=True, ROUGE_path=ROUGE_path,
-                                    #                           data_path=data_path)
-                                    # print(result)
-                                print(evaluation_list)
+                                    evaluation_list[i]['rouge_1'] = rouge.score_summary(hypothesis_sentence, {'a':reference_sentence})['rouge_1_f_score']
+                                    evaluation_list[i]['rouge_2'] = rouge.score_summary(hypothesis_sentence, {'a':reference_sentence})['rouge_2_f_score']
+                                    evaluation_list[i]['rouge_3'] = rouge.score_summary(hypothesis_sentence, {'a':reference_sentence})['rouge_3_f_score']
+                                    evaluation_list[i]['rouge_4'] = rouge.score_summary(hypothesis_sentence, {'a':reference_sentence})['rouge_4_f_score']
+                                    evaluation_list[i]['rouge_su4'] = rouge.score_summary(hypothesis_sentence, {'a':reference_sentence})['rouge_su4_f_score']
+                                pprint(evaluation_list)
                             if mode == '-c':
                                 corpus_scores={}
                                 corpus_scores['lbleu'] = leblue_scorer.eval(hypothesis_sentences, reference_sentences)
@@ -96,12 +94,17 @@ if __name__ == '__main__':
                                 evaluation_output = evaluation_output.stdout.decode("UTF-8")
                                 results = evaluation_output.split("\t")
                                 corpus_scores['bleu'] = float(results[0].split("=")[1])
-                                corpus_scores['ribes'] = float(results[1].split("=")[1])
+                                corpus_scores['ribes'] = float(results[1].split("=")[1  ])
                                 corpus_scores['nist'] = float(results[2].split("=")[1])
                                 corpus_scores['wer'] = float(results[3].split("=")[1])
                                 corpus_scores['ter'] = float(out_sum_lines[-1].split("|")[8].lstrip().rstrip()) / 100
                                 corpus_scores['meteor'] = float(
                                         meteor_evaluation_output.split("\n")[-2].split(":")[1].rstrip().lstrip())
+                                # corpus_scores['rouge_1'] =
+                                # corpus_scores['rouge_2'] =
+                                # corpus_scores['rouge_3'] =
+                                # corpus_scores['rouge_4'] =
+                                # corpus_scores['rouge_su4'] =
                                 print(corpus_scores)
 
                         else:
