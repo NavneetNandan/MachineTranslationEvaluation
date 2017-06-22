@@ -43,7 +43,7 @@ if __name__ == '__main__':
                                 "java -jar tercom-0.7.25/tercom.7.25.jar -r ref.temp -h hyp.temp -n out -o sum",
                                 stdout=subprocess.PIPE, shell=True)
                             with open("out.sum", "r") as eval_out:
-                                out_sum_lines = eval_out.readlines()[5:len(reference_sentences) + 5]
+                                out_sum_lines = eval_out.readlines()[5:len(reference_sentences) + 7]
                             meteor_evaluation_output = subprocess.run(
                                 "java -Xmx2G -jar ~/meteor_test/meteor-*.jar {0} {1} -l en -norm".format(
                                     hypothesis_file_path, reference_file_path),
@@ -87,8 +87,21 @@ if __name__ == '__main__':
                                     # print(result)
                                 print(evaluation_list)
                             if mode == '-c':
-                                lbleu_score = leblue_scorer.eval(hypothesis_sentences,reference_sentences)
-                                print(lbleu_score)
+                                corpus_scores={}
+                                corpus_scores['lbleu'] = leblue_scorer.eval(hypothesis_sentences, reference_sentences)
+                                evaluation_output = subprocess.run(
+                                    "./mteval/build/bin/mteval-corpus -e BLEU RIBES NIST WER -r " +
+                                    reference_file_path + " -h " + hypothesis_file_path, stdout=subprocess.PIPE,
+                                    shell=True)
+                                evaluation_output = evaluation_output.stdout.decode("UTF-8")
+                                results = evaluation_output.split("\t")
+                                corpus_scores['bleu'] = float(results[0].split("=")[1])
+                                corpus_scores['ribes'] = float(results[1].split("=")[1])
+                                corpus_scores['nist'] = float(results[2].split("=")[1])
+                                corpus_scores['wer'] = float(results[3].split("=")[1])
+                                corpus_scores['ter'] = float(out_sum_lines[-1].split("|")[8].lstrip().rstrip()) / 100
+                                print(corpus_scores)
+
                         else:
                             print("""Number of sentences in hypothesis file and reference file is not equal""")
                             sys.exit(1)
