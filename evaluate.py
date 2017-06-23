@@ -22,8 +22,6 @@ if __name__ == '__main__':
         reference_file_path = sys.argv[2]
         mode = sys.argv[3]
         tokenizer = RegexpTokenizer(r'\w+')
-        ROUGE_path = "pythonrouge/pythonrouge/RELEASE-1.5.5/ROUGE-1.5.5.pl" # ROUGE-1.5.5.pl
-        data_path = "pythonrouge/pythonrouge/ROUGE-1.5.5/data/WordNet-2.0.exc.db"  # data folder in RELEASE-1.5.5
         leblue_scorer = lb.LeBLEU()
         rouge = Rouge155(n_words=100)
         if os.path.exists(hypothesis_file_path) and os.path.exists(reference_file_path):
@@ -74,19 +72,28 @@ if __name__ == '__main__':
                                     evaluation_list[i]['ribes'] = float(results[1].split("=")[1])
                                     evaluation_list[i]['nist'] = float(results[2].split("=")[1])
                                     evaluation_list[i]['wer'] = float(results[3].split("=")[1])
-                                    evaluation_list[i]['ter'] = float(out_sum_lines[i].split("|")[8].lstrip().rstrip()) \
-                                                                / 100
+                                    evaluation_list[i]['ter'] = float(out_sum_lines[i].split("|")[8].lstrip()
+                                                                      .rstrip()) / 100
                                     evaluation_list[i]['meteor'] = float(
                                         meteor_evaluation_sentence_wise[i].split(":")[1].rstrip().lstrip())
-                                    evaluation_list[i]['rouge_1'] = rouge.score_summary(hypothesis_sentence, {'a':reference_sentence})['rouge_1_f_score']
-                                    evaluation_list[i]['rouge_2'] = rouge.score_summary(hypothesis_sentence, {'a':reference_sentence})['rouge_2_f_score']
-                                    evaluation_list[i]['rouge_3'] = rouge.score_summary(hypothesis_sentence, {'a':reference_sentence})['rouge_3_f_score']
-                                    evaluation_list[i]['rouge_4'] = rouge.score_summary(hypothesis_sentence, {'a':reference_sentence})['rouge_4_f_score']
-                                    evaluation_list[i]['rouge_su4'] = rouge.score_summary(hypothesis_sentence, {'a':reference_sentence})['rouge_su4_f_score']
+                                    evaluation_list[i]['rouge_1'] = \
+                                        rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
+                                            'rouge_1_f_score']
+                                    evaluation_list[i]['rouge_2'] = \
+                                        rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
+                                            'rouge_2_f_score']
+                                    evaluation_list[i]['rouge_3'] = \
+                                        rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
+                                            'rouge_3_f_score']
+                                    evaluation_list[i]['rouge_4'] = \
+                                        rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
+                                            'rouge_4_f_score']
+                                    evaluation_list[i]['rouge_su4'] = \
+                                        rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
+                                            'rouge_su4_f_score']
                                 pprint(evaluation_list)
                             if mode == '-c':
-                                corpus_scores={}
-                                corpus_scores['lbleu'] = leblue_scorer.eval(hypothesis_sentences, reference_sentences)
+                                corpus_scores = {'lbleu': leblue_scorer.eval(hypothesis_sentences, reference_sentences)}
                                 evaluation_output = subprocess.run(
                                     "./mteval/build/bin/mteval-corpus -e BLEU RIBES NIST WER -r " +
                                     reference_file_path + " -h " + hypothesis_file_path, stdout=subprocess.PIPE,
@@ -94,18 +101,34 @@ if __name__ == '__main__':
                                 evaluation_output = evaluation_output.stdout.decode("UTF-8")
                                 results = evaluation_output.split("\t")
                                 corpus_scores['bleu'] = float(results[0].split("=")[1])
-                                corpus_scores['ribes'] = float(results[1].split("=")[1  ])
+                                corpus_scores['ribes'] = float(results[1].split("=")[1])
                                 corpus_scores['nist'] = float(results[2].split("=")[1])
                                 corpus_scores['wer'] = float(results[3].split("=")[1])
                                 corpus_scores['ter'] = float(out_sum_lines[-1].split("|")[8].lstrip().rstrip()) / 100
                                 corpus_scores['meteor'] = float(
-                                        meteor_evaluation_output.split("\n")[-2].split(":")[1].rstrip().lstrip())
-                                # corpus_scores['rouge_1'] =
-                                # corpus_scores['rouge_2'] =
-                                # corpus_scores['rouge_3'] =
-                                # corpus_scores['rouge_4'] =
-                                # corpus_scores['rouge_su4'] =
-                                print(corpus_scores)
+                                    meteor_evaluation_output.split("\n")[-2].split(":")[1].rstrip().lstrip())
+                                rouge1_sum = 0
+                                rouge2_sum = 0
+                                rouge3_sum = 0
+                                rouge4_sum = 0
+                                rougesu4_sum = 0
+                                for i, hypothesis_sentence in enumerate(hypothesis_sentences):
+                                    rouge1_sum += rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
+                                        'rouge_1_f_score']
+                                    rouge2_sum += rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
+                                        'rouge_2_f_score']
+                                    rouge3_sum += rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
+                                        'rouge_3_f_score']
+                                    rouge4_sum += rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
+                                        'rouge_4_f_score']
+                                    rougesu4_sum += rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
+                                        'rouge_su4_f_score']
+                                corpus_scores['rouge_1'] = rouge1_sum / len(hypothesis_sentences)
+                                corpus_scores['rouge_2'] = rouge2_sum / len(hypothesis_sentences)
+                                corpus_scores['rouge_3'] = rouge3_sum / len(hypothesis_sentences)
+                                corpus_scores['rouge_4'] = rouge4_sum / len(hypothesis_sentences)
+                                corpus_scores['rouge_su4'] = rougesu4_sum / len(hypothesis_sentences)
+                                pprint(corpus_scores)
 
                         else:
                             print("""Number of sentences in hypothesis file and reference file is not equal""")
