@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import subprocess
 import sys
@@ -109,7 +110,7 @@ if __name__ == '__main__':
                                         rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
                                             'rouge_su4_f_score']
                                 pprint(evaluation_list)
-                                write_csv(evaluation_list, os.path.join(root_path,"eval.csv"), keys)
+                                write_csv(evaluation_list, "sentence_eval.csv", keys)
 
                             if mode == '-c':
                                 corpus_scores = {'lbleu': leblue_scorer.eval(hypothesis_sentences, reference_sentences)}
@@ -148,6 +149,9 @@ if __name__ == '__main__':
                                 corpus_scores['rouge_3'] = rouge3_sum / len(hypothesis_sentences)
                                 corpus_scores['rouge_4'] = rouge4_sum / len(hypothesis_sentences)
                                 corpus_scores['rouge_su4'] = rougesu4_sum / len(hypothesis_sentences)
+                                json_str = json.dumps(corpus_scores,indent='\t')
+                                with open("corpus_eval.txt",'w') as out:
+                                    out.write(json_str)
                                 pprint(corpus_scores)
 
                         else:
