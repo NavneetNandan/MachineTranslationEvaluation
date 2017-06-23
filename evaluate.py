@@ -1,3 +1,4 @@
+import csv
 import os
 import subprocess
 import sys
@@ -16,6 +17,14 @@ Usage:
     sys.exit(1)
 
 
+def write_csv(data, filename, keys):
+    with open(filename, 'w') as outf:
+        writer = csv.DictWriter(outf, keys, dialect=csv.excel_tab)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+
+
 if __name__ == '__main__':
     if len(sys.argv) == 4:
         hypothesis_file_path = sys.argv[1]
@@ -24,6 +33,8 @@ if __name__ == '__main__':
         tokenizer = RegexpTokenizer(r'\w+')
         leblue_scorer = lb.LeBLEU()
         rouge = Rouge155(n_words=100)
+        root_path = os.path.dirname(os.path.realpath(__file__))
+        root_path_for_shell = os.path.dirname(os.path.realpath(__file__)).replace(" ","\ ")
         if os.path.exists(hypothesis_file_path) and os.path.exists(reference_file_path):
             if mode in ["-c", "-s"]:
                 with open(hypothesis_file_path, "r") as hypothesis_file:
@@ -36,14 +47,18 @@ if __name__ == '__main__':
                             with open("hyp.temp", "w") as temp_hyp:
                                 for i, hypothesis_sentence in enumerate(hypothesis_sentences):
                                     temp_hyp.write('{0} ({1})\n'.format(hypothesis_sentence, str(i)))
-                            with open("ref.temp", "w") as temp_ref:
+                            with open( "ref.temp", "w") as temp_ref:
                                 for i, reference_sentence in enumerate(reference_sentences):
                                     temp_ref.write('{0} ({1})\n'.format(reference_sentence, str(i)))
                             subprocess.run(
-                                "java -jar tercom-0.7.25/tercom.7.25.jar -r ref.temp -h hyp.temp -n out -o sum",
+                                "java -jar " + os.path.join(root_path_for_shell,
+                                                            "tercom-0.7.25/tercom.7.25.jar") + " -r ref.temp -h hyp.temp -n out -o sum",
                                 stdout=subprocess.PIPE, shell=True)
+                            os.remove("hyp.temp")
+                            os.remove("ref.temp")
                             with open("out.sum", "r") as eval_out:
                                 out_sum_lines = eval_out.readlines()[5:len(reference_sentences) + 7]
+                            os.remove("out.sum")
                             meteor_evaluation_output = subprocess.run(
                                 "java -Xmx2G -jar ~/meteor_test/meteor-*.jar {0} {1} -l en -norm".format(
                                     hypothesis_file_path, reference_file_path),
@@ -51,20 +66,22 @@ if __name__ == '__main__':
                             meteor_evaluation_output = meteor_evaluation_output.stdout.decode("UTF-8")
                             meteor_evaluation_sentence_wise = meteor_evaluation_output.split('\n')[
                                                               11:11 + len(reference_sentences)]
-
+                            keys = ['hypothesis', 'text', 'bleu', 'lbleu', 'ribes', 'nist', 'wer', 'ter', 'meteor',
+                                    'rouge_1', 'rouge_2', 'rouge_3', 'rouge_4', 'rouge_su4']
                             if mode == '-s':
                                 evaluation_list = list(range(0, len(hypothesis_sentences)))
                                 count = 0
                                 evaluation_output = subprocess.run(
-                                    "./mteval/build/bin/mteval-sentence -e BLEU RIBES NIST WER -r " +
+                                    os.path.join(root_path_for_shell,
+                                                 "mteval/build/bin/mteval-sentence") + " -e BLEU RIBES NIST WER -r " +
                                     reference_file_path + " -h " + hypothesis_file_path, stdout=subprocess.PIPE,
                                     shell=True)
                                 evaluation_output = evaluation_output.stdout.decode("UTF-8")
                                 # print(evaluation_output)
                                 evaluation_sentence_wise = evaluation_output.split("\n")
                                 for i, hypothesis_sentence in enumerate(hypothesis_sentences):
-                                    evaluation_list[i] = {}
                                     reference_sentence = reference_sentences[i]
+                                    evaluation_list[i] = {'hypothesis': hypothesis_sentence, 'text': reference_sentence}
                                     evaluation_list[i]['lbleu'] = leblue_scorer.eval_single(hypothesis_sentence,
                                                                                             reference_sentence)
                                     results = evaluation_sentence_wise[i].split("\t")
@@ -92,10 +109,13 @@ if __name__ == '__main__':
                                         rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
                                             'rouge_su4_f_score']
                                 pprint(evaluation_list)
+                                write_csv(evaluation_list, os.path.join(root_path,"eval.csv"), keys)
+
                             if mode == '-c':
                                 corpus_scores = {'lbleu': leblue_scorer.eval(hypothesis_sentences, reference_sentences)}
                                 evaluation_output = subprocess.run(
-                                    "./mteval/build/bin/mteval-corpus -e BLEU RIBES NIST WER -r " +
+                                    os.path.join(root_path_for_shell,
+                                                 "mteval/build/bin/mteval-corpus") + " -e BLEU RIBES NIST WER -r " +
                                     reference_file_path + " -h " + hypothesis_file_path, stdout=subprocess.PIPE,
                                     shell=True)
                                 evaluation_output = evaluation_output.stdout.decode("UTF-8")
