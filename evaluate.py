@@ -57,11 +57,11 @@ if __name__ == '__main__':
                                                             "tercom-0.7.25/tercom.7.25.jar") +
                                 " -r ref.temp -h hyp.temp -n out -o sum",
                                 stdout=subprocess.PIPE, shell=True)
-                            # os.remove("hyp.temp")
-                            # os.remove("ref.temp")
+                            os.remove("hyp.temp")
+                            os.remove("ref.temp")
                             with open("out.sum", "r") as eval_out:
                                 out_sum_lines = eval_out.readlines()[5:len(reference_sentences) + 7]
-                            # os.remove("out.sum")
+                            os.remove("out.sum")
                             meteor_evaluation_output = subprocess.run(
                                 "java -Xmx2G -jar meteor_test/meteor-*.jar {0} {1} -l en -norm".format(
                                     hypothesis_file_path, reference_file_path),
