@@ -1,3 +1,9 @@
 [submodule "pyrouge"]
 	path = pyrouge
-	url = https://github.com/andersjo/pyrouge.git
+	url = https://github.com/NavneetNandan/pyrouge
+[submodule "mteval"]
+	path = mteval
+	url = https://github.com/odashi/mteval.git
+[submodule "lebleu"]
+	path = lebleu
+	url = https://github.com/Waino/LeBLEU.git
