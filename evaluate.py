@@ -30,12 +30,13 @@ if __name__ == '__main__':
     if len(sys.argv) == 4:
         hypothesis_file_path = sys.argv[1]
         reference_file_path = sys.argv[2]
+        dir_name = os.path.dirname(hypothesis_file_path)
         mode = sys.argv[3]
         tokenizer = RegexpTokenizer(r'\w+')
         leblue_scorer = lb.LeBLEU()
         rouge = Rouge155(n_words=100)
         root_path = os.path.dirname(os.path.realpath(__file__))
-        root_path_for_shell = os.path.dirname(os.path.realpath(__file__)).replace(" ","\ ")
+        root_path_for_shell = os.path.dirname(os.path.realpath(__file__)).replace(" ", "\ ")
         if os.path.exists(hypothesis_file_path) and os.path.exists(reference_file_path):
             if mode in ["-c", "-s"]:
                 with open(hypothesis_file_path, "r") as hypothesis_file:
@@ -48,20 +49,21 @@ if __name__ == '__main__':
                             with open("hyp.temp", "w") as temp_hyp:
                                 for i, hypothesis_sentence in enumerate(hypothesis_sentences):
                                     temp_hyp.write('{0} ({1})\n'.format(hypothesis_sentence, str(i)))
-                            with open( "ref.temp", "w") as temp_ref:
+                            with open("ref.temp", "w") as temp_ref:
                                 for i, reference_sentence in enumerate(reference_sentences):
                                     temp_ref.write('{0} ({1})\n'.format(reference_sentence, str(i)))
                             subprocess.run(
                                 "java -jar " + os.path.join(root_path_for_shell,
-                                                            "tercom-0.7.25/tercom.7.25.jar") + " -r ref.temp -h hyp.temp -n out -o sum",
+                                                            "tercom-0.7.25/tercom.7.25.jar") +
+                                " -r ref.temp -h hyp.temp -n out -o sum",
                                 stdout=subprocess.PIPE, shell=True)
-                            os.remove("hyp.temp")
-                            os.remove("ref.temp")
+                            # os.remove("hyp.temp")
+                            # os.remove("ref.temp")
                             with open("out.sum", "r") as eval_out:
                                 out_sum_lines = eval_out.readlines()[5:len(reference_sentences) + 7]
-                            os.remove("out.sum")
+                            # os.remove("out.sum")
                             meteor_evaluation_output = subprocess.run(
-                                "java -Xmx2G -jar ~/meteor_test/meteor-*.jar {0} {1} -l en -norm".format(
+                                "java -Xmx2G -jar meteor_test/meteor-*.jar {0} {1} -l en -norm".format(
                                     hypothesis_file_path, reference_file_path),
                                 stdout=subprocess.PIPE, shell=True)
                             meteor_evaluation_output = meteor_evaluation_output.stdout.decode("UTF-8")
@@ -110,7 +112,7 @@ if __name__ == '__main__':
                                         rouge.score_summary(hypothesis_sentence, {'a': reference_sentence})[
                                             'rouge_su4_f_score']
                                 pprint(evaluation_list)
-                                write_csv(evaluation_list, "sentence_eval.csv", keys)
+                                write_csv(evaluation_list, os.path.join(dir_name, "sentence_eval.csv"), keys)
 
                             if mode == '-c':
                                 corpus_scores = {'lbleu': leblue_scorer.eval(hypothesis_sentences, reference_sentences)}
@@ -149,8 +151,8 @@ if __name__ == '__main__':
                                 corpus_scores['rouge_3'] = rouge3_sum / len(hypothesis_sentences)
                                 corpus_scores['rouge_4'] = rouge4_sum / len(hypothesis_sentences)
                                 corpus_scores['rouge_su4'] = rougesu4_sum / len(hypothesis_sentences)
-                                json_str = json.dumps(corpus_scores,indent='\t')
-                                with open("corpus_eval.txt",'w') as out:
+                                json_str = json.dumps(corpus_scores, indent='\t')
+                                with open(os.path.join(dir_name, "corpus_eval.txt"), 'w') as out:
                                     out.write(json_str)
                                 pprint(corpus_scores)
 
