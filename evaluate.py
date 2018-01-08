@@ -6,7 +6,7 @@ import sys
 from pyrouge.pyrouge.rouge import Rouge155
 from pprint import pprint
 from nltk import RegexpTokenizer
-import lebleu.lebleu.lebleu as lb
+import lebleu.lebleu as lb
 
 
 def errmsg():
